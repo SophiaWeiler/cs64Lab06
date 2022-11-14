@@ -79,7 +79,7 @@ colon: .asciiz ":"
         
         loop:
             #find sum
-            bgt $t7, $s3, func_check #this is the loop exit condition
+            bge $t7, $s3, func_check #this is the loop exit condition
             lw $t6, 0($t0)
             
             #print array entry
@@ -165,11 +165,43 @@ colon: .asciiz ":"
             j loop2
 
         closing:
-            addiu $s0 $s0 -40 #resetting the $s0 value t
         #This is the section where we prepare to call the function recursively.
         
             move $s4, $t0 #save the small array length value 
             move $s5, $t6 #save the big array length value
+
+            #for $s0 reset
+            #determining how many spaces it has moved over and then multiplying by -4
+            add $t0 $s4 $s5
+            li $t6 -4
+            mult $t0 $t6
+            mflo $t0
+            #resetting the $s0 pointer value by that much
+            add $s0 $s0 $t0 
+
+            #starting address of small array move into stored variable
+            #for $t1 reset (address of small array)
+            #determining how many spaces it has moved over and then multiplying by -4
+            add $t0 $t1 $0
+            li $t6 -4
+            mult $t0 $t6
+            mflo $t0
+            #resetting the $s0 pointer value by that much and storing it in $s0
+            add $s6 $s0 $t0 
+
+            #starting address of big array move into stored variable
+            #for $t1 reset (address of small array)
+            #determining how many spaces it has moved over and then multiplying by -4
+            add $t0 $t1 $0
+            li $t6 -4
+            mult $t0 $t6
+            mflo $t0
+            #resetting the $s0 pointer value by that much and storing it in $s0
+            add $s7 $s0 $t0 
+
+            #updating the depth for both the small and the big array
+            addi $s1 -1
+
 
             jal ConventionCheck #DO NOT REMOVE 
 
@@ -179,9 +211,15 @@ colon: .asciiz ":"
             
             #This is updating the buffer so that we don't overwrite our old values
             addi $s2, $s2, 80
+            
             #We call small array first so we load small array length as arr_len
             move $s3, $s4 
             
+            
+
+            #move stored value of small array from $s6 to $s0 for function call
+            move $s0 $s6
+
             jal disaggregate
 
             jal ConventionCheck #DO NOT REMOVE
@@ -191,6 +229,10 @@ colon: .asciiz ":"
 
             addi $s2, $s2, 80
             move $s3, $s5 #big array call second
+            #move stored value of big array from $s7 to $s0 for function call
+            move $s0 $s7
+
+        
             
             jal disaggregate
 
@@ -203,7 +245,15 @@ colon: .asciiz ":"
         #Manually drawing out the stack changes helps figure this step out
             
             #Load values before update if you have to
-            addiu $sp, $sp, ?? #?? = the positive of how many values we store in (stack * 4)
+            lw $s0 0($sp)
+            lw $s0 4($sp)
+            lw $s2 8($sp)
+            lw $s3 12($sp)
+            lw $s4 16($sp)
+            lw $s5 20($sp)
+            lw $ra 24($sp)
+            
+            addiu $sp, $sp, 28 # the positive of how many values we store in (stack * 4)
             #Load values after update if you have to
     
     exit:

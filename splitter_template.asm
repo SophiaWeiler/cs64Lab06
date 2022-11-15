@@ -26,14 +26,14 @@ colon: .asciiz ":"
         j exit
     
     disaggregate:
-        addiu $sp, $sp, -28 #?? = the negative of how many values we store in (stack * 4)
+        addiu $sp, $sp, -36 #?? = the negative of how many values we store in (stack * 4)
         
         #store all required values that need to be preserved across function calls
         
         #store array address on stack
         sw $s0 0($sp)
         #store n (depth) on stack
-        sw $s0 4($sp)
+        sw $s1 4($sp)
         #store buffer pointer on stack
         sw $s2 8($sp)
         #store length of array on stack
@@ -47,9 +47,17 @@ colon: .asciiz ":"
         #store big array length on stack
         sw $s5 20($sp)
 
+        #store address of starting point for small array
+        sw $s6 24($sp)
+
+        #store address of starting point for big array
+        sw $s7 28($sp)
+
+
+
         #multiple function calls overwrite ra, therefore must be preserved
         #store return address
-        sw $ra 24($sp)
+        sw $ra 32($sp)
 
         #print depth value, according to expected format
         la $a0, depth    
@@ -108,8 +116,11 @@ colon: .asciiz ":"
             #They are OR'd in the C/C++ template
             #Do you need to OR them in MIPs too? 
             li $t3 1
+            
+
+            #THIS MIGHT BE AN ISSUE
             ble $s1 $0 function_end
-            ble $s3 $t3 function_end
+            blt $s3 $t3 function_end
             
         #calculate the average 
         div $t2, $s3 
@@ -139,7 +150,9 @@ colon: .asciiz ":"
             #if entry > average put in big array
 
             #break if the counter is equal to array length
-            ble $t7 $s3 closing
+
+            #THIS IS THE ISSUE
+            bge $t7 $s3 closing
             
             lw $t5 0($s0)
             
@@ -170,34 +183,15 @@ colon: .asciiz ":"
             move $s4, $t0 #save the small array length value 
             move $s5, $t6 #save the big array length value
 
-            #for $s0 reset
-            #determining how many spaces it has moved over and then multiplying by -4
-            add $t0 $s4 $s5
-            li $t6 -4
-            mult $t0 $t6
-            mflo $t0
-            #resetting the $s0 pointer value by that much
-            add $s0 $s0 $t0 
+            #for $s0 reset 
+            lw $s0 4($sp)
 
             #starting address of small array move into stored variable
-            #for $t1 reset (address of small array)
-            #determining how many spaces it has moved over and then multiplying by -4
-            add $t0 $t1 $0
-            li $t6 -4
-            mult $t0 $t6
-            mflo $t0
-            #resetting the $s0 pointer value by that much and storing it in $s0
-            add $s6 $s0 $t0 
+            lw $s6 8($sp)
 
             #starting address of big array move into stored variable
-            #for $t1 reset (address of small array)
-            #determining how many spaces it has moved over and then multiplying by -4
-            add $t0 $t1 $0
-            li $t6 -4
-            mult $t0 $t6
-            mflo $t0
-            #resetting the $s0 pointer value by that much and storing it in $s0
-            add $s7 $s0 $t0 
+            lw $s7 8($sp)
+            addiu $s7 40
 
             #updating the depth for both the small and the big array
             addi $s1 -1
@@ -246,15 +240,19 @@ colon: .asciiz ":"
             
             #Load values before update if you have to
             lw $s0 0($sp)
-            lw $s0 4($sp)
+            lw $s1 4($sp)
             lw $s2 8($sp)
             lw $s3 12($sp)
             lw $s4 16($sp)
             lw $s5 20($sp)
-            lw $ra 24($sp)
+            lw $s6 24($sp)
+            lw $s7 28($sp)
+            lw $ra 32($sp)
             
-            addiu $sp, $sp, 28 # the positive of how many values we store in (stack * 4)
+            addiu $sp, $sp, 36 # the positive of how many values we store in (stack * 4)
             #Load values after update if you have to
+
+            jr $ra
     
     exit:
         li $v0, 10

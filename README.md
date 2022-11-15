@@ -8,8 +8,8 @@ I think that the MIPS code is taking in an array of length 10 and recursively sp
 
 2. Will the space used in the stack change with change in array length or change in array values? Or change in depth value? Why or why not? (5 points)
 
-The space used in the stack will change when there is a change in the array values that are passed in as the $s0 value (i.e. main array that is being used for the disaggregate function call). This is because, when a new array is created (big/small) it is passed in as the $s0 value for the function call and at the beggining of the function call, memory is allocated on the stack. It is not when there is a change in depth because at the same depth, two different arrays are being used which means the stack changes, therefore it can not be soley reliant on when the depth changes. Also, it is change in array values not change in array length because two arrays of the same length but different values will still cause new memory to be allocated on the stack. Therefore, change in array value is the main cause of the change in the stack because it is the factor that consistenly requires the stack to be updated whereas depth and length have exceptions where they remain the same but the stack data does not. 
 
+The space used in the stack will only change when the original input depth value changes. This is because with each depth value, the number of times that new memory is allocated on the stack grows by a factor of two (i.e. with depth level 0 --> 36 bits of memory allocated once, depth level 1 --> 36 bits of memory allcated twice, depth level 2 --> 36 bits of memory allocated four times, etc.). Change in array length and array values will not affect the space used in the stack because not all the values are stored on the stack, only a pointer to the address of the memory is stored, therefore, it doesn't matter how many values or what values are contained within the array.
 
 
 
